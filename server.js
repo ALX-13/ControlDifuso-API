@@ -13,6 +13,7 @@ const io = new Server(server, {
     methods: ["GET", "POST"]
   }
 });
+const mongoUri = process.env.MONGO_URI;
 
 // Middleware
 app.use(express.json());
@@ -37,8 +38,11 @@ io.on("connection", (socket) => {
 // 🔹 Conexión DB + insertar demo
 async function connectDB() {
   try {
-    await mongoose.connect("mongodb+srv://control_difuso_db:sUwSHWaf1IZMPpZ6@cluster0.ppaqzdu.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0");
-    console.log("✅ MongoDB conectado");
+    await mongoose.connect(mongoUri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    }).then(() => console.log("✅ MongoDB conectado"))
+    .catch((err) => console.error("❌ Error MongoDB:", err));
 
     // Artículo de prueba
     if (await Article.countDocuments() === 0) {
@@ -84,7 +88,7 @@ async function connectDB() {
 connectDB();
 
 // Iniciar server
-const PORT = 4000;
+const PORT = process.env.PORT || 4000;
 server.listen(PORT, () => {
   console.log(`Servidor escuchando en http://localhost:${PORT}`);
 });
