@@ -1,13 +1,13 @@
-# fly.toml app configuration file generated for controldifuso on 2025-09-07T04:14:24-05:00
+# fly.toml app configuration file generated for controldifuso-restless-log-282 on 2025-09-07T05:10:20-05:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'controldifuso'
+app = 'controldifuso-restless-log-282'
 primary_region = 'gru'
 
 [build]
-  dockerfile = "Dockerfile"
+  dockerfile = 'Dockerfile'
 
 [http_service]
   internal_port = 3000
