@@ -2,8 +2,11 @@ import express from "express";
 import http from "http";
 import { Server } from "socket.io";
 import mongoose from "mongoose";
+import dotenv from "dotenv";
 import { Article, Interview, Candidate } from "./models/dataModel.js";
 import apiRoutes from "./routes/api.js";
+
+dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
@@ -13,10 +16,23 @@ const io = new Server(server, {
     methods: ["GET", "POST"]
   }
 });
-const mongoUri = process.env.MONGO_URI;
+const mongoUri = process.env.MONGO_URI || "mongodb://localhost:27017/control-difuso";
 
 // Middleware
 app.use(express.json());
+
+// CORS middleware
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
 
 // Rutas
 app.get("/", (req, res) => {
@@ -38,14 +54,17 @@ io.on("connection", (socket) => {
 // 🔹 Conexión DB + insertar demo
 async function connectDB() {
   try {
-    await mongoose.connect(mongoUri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    }).then(() => console.log("✅ MongoDB conectado"))
-    .catch((err) => console.error("❌ Error MongoDB:", err));
+    console.log("🔄 Intentando conectar a MongoDB...");
+    console.log("📍 MONGO_URI:", mongoUri ? "✅ Configurada" : "❌ No configurada");
+    
+    await mongoose.connect(mongoUri);
+    console.log("✅ MongoDB conectado exitosamente");
 
     // Artículo de prueba
-    if (await Article.countDocuments() === 0) {
+    const articleCount = await Article.countDocuments();
+    console.log(`📊 Artículos existentes: ${articleCount}`);
+    
+    if (articleCount === 0) {
       await Article.create({
         title: "Primer artículo",
         excerpt: "Resumen breve del artículo",
@@ -57,7 +76,10 @@ async function connectDB() {
     }
 
     // Entrevista de prueba
-    if (await Interview.countDocuments() === 0) {
+    const interviewCount = await Interview.countDocuments();
+    console.log(`📊 Entrevistas existentes: ${interviewCount}`);
+    
+    if (interviewCount === 0) {
       await Interview.create({
         title: "Entrevista inicial",
         interviewer: "Control Difuso",
@@ -69,7 +91,10 @@ async function connectDB() {
     }
 
     // Candidato de prueba
-    if (await Candidate.countDocuments() === 0) {
+    const candidateCount = await Candidate.countDocuments();
+    console.log(`📊 Candidatos existentes: ${candidateCount}`);
+    
+    if (candidateCount === 0) {
       await Candidate.create({
         name: "Candidato de prueba",
         party: "Partido Demo",
@@ -81,14 +106,15 @@ async function connectDB() {
     }
 
   } catch (err) {
-    console.error("❌ Error MongoDB:", err);
+    console.error("❌ Error MongoDB:", err.message);
+    console.error("🔍 Detalles del error:", err);
   }
 }
 
 connectDB();
 
 // Iniciar server
-const PORT = process.env.PORT || 4000;
-server.listen(PORT, () => {
-  console.log(`Servidor escuchando en http://localhost:${PORT}`);
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Servidor escuchando en http://0.0.0.0:${PORT}`);
 });
